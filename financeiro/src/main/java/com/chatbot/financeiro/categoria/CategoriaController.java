@@ -22,17 +22,16 @@ public class CategoriaController {
         this.categoriaService = categoriaService;
     }
 
-    @PostMapping("/usuario/{userId}")
-    public ResponseEntity<?> criar(@PathVariable Integer userId, @RequestBody Categoria categoria) {
+    @PostMapping
+    public ResponseEntity<?> criar(@PathVariable Integer userId, @RequestBody CategoriaRequest request) {
         try {
-            Categoria salva = categoriaService.criar(userId, categoria);
-            return ResponseEntity.status(HttpStatus.CREATED).body(salva);
+            return ResponseEntity.status(HttpStatus.CREATED).body(categoriaService.criar(userId, request));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
-    @GetMapping("/usuario/{userId}")
+    @GetMapping
     public ResponseEntity<?> listarPorUsuario(
             @PathVariable Integer userId,
             @RequestParam(required = false) TipoCategoria tipo
@@ -45,27 +44,31 @@ public class CategoriaController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<?> buscarPorId(@PathVariable Integer id) {
+    public ResponseEntity<?> buscarPorId(@PathVariable Integer userId, @PathVariable Integer id) {
         try {
-            return ResponseEntity.ok(categoriaService.buscarPorId(id));
+            return ResponseEntity.ok(categoriaService.buscarPorId(userId, id));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
         }
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> atualizar(@PathVariable Integer id, @RequestBody Categoria categoria) {
+    public ResponseEntity<?> atualizar(
+            @PathVariable Integer userId,
+            @PathVariable Integer id,
+            @RequestBody CategoriaRequest request
+    ) {
         try {
-            return ResponseEntity.ok(categoriaService.atualizar(id, categoria));
+            return ResponseEntity.ok(categoriaService.atualizar(userId, id, request));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> excluir(@PathVariable Integer id) {
+    public ResponseEntity<?> excluir(@PathVariable Integer userId, @PathVariable Integer id) {
         try {
-            categoriaService.excluir(id);
+            categoriaService.excluir(userId, id);
             return ResponseEntity.noContent().build();
         } catch (IllegalArgumentException e) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());

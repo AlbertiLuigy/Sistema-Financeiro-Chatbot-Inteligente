@@ -7,38 +7,63 @@ import org.springframework.stereotype.Service;
 @Service 
 public class UserService {
     
-    private final UserRepository userRepository;
+   private final UserRepository userRepository;
 
-    public UserService(UserRepository userRepository) { // Injeção de dependência do UserRepository
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    public User cadastrar(User user) { // Método para cadastrar um novo usuário
-        if (userRepository.existsByEmail(user.getEmail())) { // Verifica se o email já está cadastrado
+    public UserResponse cadastrar(UserCreateRequest request) {
+        if (request.email() == null || request.email().isBlank()) {
+            throw new IllegalArgumentException("O e-mail é obrigatório.");
+        }
+        if (request.documento() == null || request.documento().isBlank()) {
+            throw new IllegalArgumentException("O documento (CPF/CNPJ) é obrigatório.");
+        }
+        if (request.senha() == null || request.senha().isBlank()) {
+            throw new IllegalArgumentException("A senha é obrigatória.");
+        }
+        if (userRepository.existsByEmail(request.email())) {
             throw new IllegalArgumentException("E-mail já cadastrado.");
         }
-        if (userRepository.existsByDocumento(user.getDocumento())) { // Verifica se o documento (CPF/CNPJ) já está cadastrado
+        if (userRepository.existsByDocumento(request.documento())) {
             throw new IllegalArgumentException("Documento (CPF/CNPJ) já cadastrado.");
         }
 
-        // TODO: criptografar senha com BCrypt quando adicionarmos Spring Security
-        user.setSenhaHash(user.getSenhaHash());
+        User user = new User();
+        user.setTipoPessoa(request.tipoPessoa());
+        user.setNomeOuRazao(request.nomeOuRazao());
+        user.setDocumento(request.documento());
+        user.setDataNascimento(request.dataNascimento());
+        user.setEmail(request.email());
+        // TODO: codificar palavra-passe com BCrypt quando adicionarmos Spring Security
+        user.setSenhaHash(request.senha());
+        user.setRendaOuFaturamento(request.rendaOuFaturamento());
+        user.setCep(request.cep());
         user.setAtivo(true);
 
-        return userRepository.save(user);
+        User salvo = userRepository.save(user);
+        return UserResponse.fromEntity(salvo);
     }
 
-    public List<User> listarTodos() { // Método para listar todos os usuários
-        return userRepository.findAll();
+    public List<UserResponse> listarTodos() {
+        return userRepository.findAll()
+                .stream()
+                .map(UserResponse::fromEntity)
+                .toList();
     }
 
-    public User buscarPorId(Integer id) { // Método para buscar um usuário pelo ID
+    public User buscarEntidadePorId(Integer id) {
         return userRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Usuário não encontrado com ID: " + id));
+                .orElseThrow(() -> new IllegalArgumentException("Utilizador não encontrado com ID: " + id));
     }
 
-    public void desativar(Integer id) { // Método para desativar um usuário pelo ID
-        User user = buscarPorId(id);
+    public UserResponse buscarPorId(Integer id) {
+        return UserResponse.fromEntity(buscarEntidadePorId(id));
+    }
+
+    public void desativar(Integer id) {
+        User user = buscarEntidadePorId(id);
         user.setAtivo(false);
         userRepository.save(user);
     }

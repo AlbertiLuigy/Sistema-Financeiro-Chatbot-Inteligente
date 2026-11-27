@@ -23,9 +23,9 @@ public class UserController {
     }
 
     @PostMapping
-    public ResponseEntity<?> cadastrar(@RequestBody User user) {
+    public ResponseEntity<?> cadastrar(@RequestBody UserCreateRequest request) {
         try {
-            User salvo = userService.cadastrar(user);
+            UserResponse salvo = userService.cadastrar(request);
             return ResponseEntity.status(HttpStatus.CREATED).body(salvo);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
@@ -33,7 +33,7 @@ public class UserController {
     }
 
     @GetMapping
-    public ResponseEntity<List<User>> listarTodos() {
+    public ResponseEntity<List<UserResponse>> listarTodos() {
         return ResponseEntity.ok(userService.listarTodos());
     }
 
@@ -47,8 +47,12 @@ public class UserController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> desativar(@PathVariable Integer id) {
-        userService.desativar(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<?> desativar(@PathVariable Integer id) {
+        try {
+            userService.desativar(id);
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        }
     }
 }
